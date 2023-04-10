@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { GetStaticPaths, GetStaticProps, NextPage  } from 'next'
 import { Button, Card, Container, Grid, Image, Text } from '@nextui-org/react';
 import { Layout } from '@/components/layout/Layout';
-import { Pokemon } from '@/interface';
+import { Pokemon, PokemonListResponse } from '@/interface';
+import pokeApi from '@/api/pokeApi';
 import { existsInFavorites, getPokemonInfo, toggleFavorite } from '@/utils';
 
 import confetti from 'canvas-confetti'
@@ -11,13 +12,13 @@ interface Props {
     pokemon: Pokemon
 }
 
-const PokemonPage:NextPage <Props> = ({ pokemon }) => {
+const PokemonByNamePage:NextPage <Props> = ({ pokemon }) => {
 
     const [ isInFavorites, setIsInFavorites] = useState(false)    
 
     useEffect(() => {
         setIsInFavorites(existsInFavorites(pokemon.id))
-    }, [pokemon.id] )
+    }, [pokemon.id] ) 
 
     const onToggleFavorite = () => {
         toggleFavorite(pokemon.id)
@@ -106,12 +107,17 @@ const PokemonPage:NextPage <Props> = ({ pokemon }) => {
 }
 
 // You should use getStaticPaths if you’re statically pre-rendering pages that use dynamic routes
+
+
 /// Sirve para generar todas las paginas staticas en el build en este caso generara 151
 export const getStaticPaths: GetStaticPaths = async (ctx) => {
-    const pokemonTotal = [...Array(151)].map((value, index) => `${index + 1}`)
+    const {data} = await pokeApi.get<PokemonListResponse>(`/pokemon?limit=151`)
+
+    const pokemonNames: string[] = data.results.map( pokemon => pokemon.name)
+
     return {
-        paths: pokemonTotal.map( id => ( {
-            params: { id }
+        paths: pokemonNames.map( (name) => ( {
+            params: { name }
         })),
         fallback: false
     }
@@ -120,15 +126,15 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
 
-    const {id} = params as { id: string }
+    const {name} = params as { name: string }
 
     return {
         props: {
-            pokemon: await getPokemonInfo(id)
+            pokemon: await getPokemonInfo(name)
         }
     }
 }
 
 
 
-export default PokemonPage;
+export default PokemonByNamePage;

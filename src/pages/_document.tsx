@@ -6,6 +6,7 @@ export default function Document() {
     <Html lang="es">
         <Head> 
             {CssBaseline.flush()} 
+            
         </Head>
         <body>
             <Main />
